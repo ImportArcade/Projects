@@ -1,0 +1,33 @@
+table, th, tr, td {
+  border: solid;
+  border-collapse: collapse;
+  padding: 10px;
+}
+
+body {
+  background-color: #b3e0ff;
+}
+
+a:visited {
+  color:grey;
+}
+
+a {
+  color: black;
+}
+
+a:active {
+  color: white;
+}
+
+ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+li {
+  display: inline;
+  padding-right: 10px;
+  text-transform: uppercase;
+}
