@@ -1,0 +1,131 @@
+Colby Barrett
+SQL Assignment 8
+CS 2550
+
+1.
+SELECT DISTINCT s.student_id, first_name, last_name, To_Char(enroll_date, 'Mon DD YYYY HH:MI') AS DATEENROLLED
+FROM student s INNER JOIN enrollment e
+ON s.student_id = e.student_id
+WHERE To_Char(enroll_date, 'Mon DD YYYY HH:MI') =
+    (SELECT To_Char(MIN(enroll_date), 'Mon DD YYYY HH:MI')
+    FROM student s INNER JOIN enrollment e
+    ON s.student_id = e.student_id)
+ORDER BY s.student_id;
+
+2.
+SELECT description, cost, capacity, section_no, section_id
+FROM course c INNER JOIN section sec
+ON c.course_no = sec.course_no
+WHERE cost =
+    (SELECT MIN(cost)
+    FROM course c INNER JOIN section sec
+    ON c.course_no = sec.course_no)
+AND capacity <=
+    (SELECT AVG(capacity)
+    FROM course c INNER JOIN section sec
+    ON c.course_no = sec.course_no)
+ORDER BY capacity, section_id;
+
+3.
+SELECT DISTINCT c.course_no, description, SUM(capacity) AS TOTAL_CAPACITY
+FROM course c INNER JOIN section sec
+ON c.course_no = sec.course_no
+GROUP BY c.course_no, description
+HAVING SUM(capacity) < 
+    (SELECT AVG(capacity)
+    FROM course c INNER JOIN section sec
+    ON c.course_no = sec.course_no)
+ORDER BY description, TOTAL_CAPACITY;
+
+4.
+SELECT s.student_id, first_name, last_name, COUNT(*) AS MOST_SECTIONS
+FROM student s INNER JOIN enrollment e
+ON s.student_id = e.student_id
+GROUP BY s.student_id, first_name, last_name
+HAVING COUNT(*) =
+    (SELECT MAX(NUM_SECTIONS)
+    FROM
+        (SELECT s.student_id, first_name, last_name, COUNT(*) AS NUM_SECTIONS
+        FROM student s INNER JOIN enrollment e
+        ON s.student_id = e.student_id
+        GROUP BY s.student_id, first_name, last_name))
+ORDER BY last_name, first_name;
+
+5.
+SELECT first_name, last_name, z.zip
+FROM student s INNER JOIN zipcode z
+ON s.zip = z.zip
+WHERE z.zip =
+    (SELECT z.zip
+    FROM student s INNER JOIN zipcode z
+    ON s.zip = z.zip
+    GROUP BY z.zip
+    HAVING COUNT(*) = 
+        (SELECT MAX(NUM_STUDENTS)
+        FROM
+            (SELECT z.zip, COUNT(*) AS NUM_STUDENTS
+            FROM student s INNER JOIN zipcode z
+            ON s.zip = z.zip
+            GROUP BY z.zip)))
+ORDER BY last_name, first_name;
+
+6.
+SELECT DISTINCT c.description, C.course_no, gt.description AS GRADE_TYPE_DESCRIPTION
+FROM course c INNER JOIN section sec
+ON c.course_no = sec.course_no INNER JOIN grade_type_weight gtw
+ON sec.section_id = gtw.section_id INNER JOIN grade_type gt
+ON gtw.grade_type_code = gt.grade_type_code
+WHERE gt.description IN
+    (SELECT gt.description
+    FROM course c INNER JOIN section sec
+    ON c.course_no = sec.course_no INNER JOIN grade_type_weight gtw
+    ON sec.section_id = gtw.section_id INNER JOIN grade_type gt
+    ON gtw.grade_type_code = gt.grade_type_code
+    WHERE SUBSTR(gt.description, 1, 7) = 'Midterm');
+	
+7.
+SELECT first_name, last_name
+FROM student
+WHERE student_id NOT IN
+    (SELECT s.student_id
+    FROM student s INNER JOIN enrollment e
+    ON e.student_id = s.student_id
+    WHERE S.student_id IS NOT NULL)
+ORDER BY last_name, first_name;
+
+
+8.
+SELECT first_name, last_name, description AS COURSE_DESCRIPTION, sec.section_id, numeric_grade
+FROM student s INNER JOIN enrollment e
+ON s.student_id = e.student_id INNER JOIN section sec
+ON e.section_id = sec.section_id INNER JOIN course c
+ON c.course_no = sec.course_no INNER JOIN grade g ON
+e.section_id = g.section_id AND e.student_id = g.student_id
+WHERE SUBSTR(grade_type_code, 1, 2) = 'QZ' AND numeric_grade =
+    (SELECT MIN(numeric_grade)
+    FROM
+        (SELECT numeric_grade
+        FROM grade
+        WHERE SUBSTR(grade_type_code, 1, 2) = 'QZ'))
+ORDER BY last_name, first_name, description;
+
+9.
+SELECT ENROLLED, capacity, section_id
+FROM 
+    (SELECT capacity, e.section_id, COUNT(*) ENROLLED
+    FROM enrollment e INNER JOIN section sec
+    ON e.section_id = sec.section_id
+    GROUP BY capacity, e.section_id)
+WHERE ENROLLED >= capacity
+ORDER BY capacity DESC, section_id;
+
+10.
+SELECT description, c.course_no, location, capacity
+FROM course c INNER JOIN section sec
+ON c.course_no = sec.course_no
+WHERE cost =
+    (SELECT MIN(cost)
+    FROM
+        (SELECT cost
+        FROM course))
+ORDER BY location, description, capacity;
